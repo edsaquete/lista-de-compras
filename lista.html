@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>🛒 Lista de Compras</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+    h2 { margin-top: 30px; }
+    input, select, button {
+      padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box;
+    }
+    ul { list-style-type: none; padding-left: 0; }
+    li {
+      background: #fff; margin: 5px 0; padding: 10px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .bought { text-decoration: line-through; color: gray; }
+    .category { background: #e0e0e0; padding: 5px; margin-top: 20px; font-weight: bold; }
+    button.remove { background: none; border: none; color: red; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>🛒 Lista de Compras</h1>
+
+  <select id="categorySelect">
+    <option value="Alimentação">Alimentação</option>
+    <option value="Higiene">Higiene</option>
+    <option value="Limpeza">Limpeza</option>
+    <option value="Outros">Outros</option>
+  </select>
+  <input type="text" id="itemInput" placeholder="Novo item">
+  <button onclick="addItem()">Adicionar</button>
+
+  <div id="listsContainer"></div>
+
+  <script>
+    let list = JSON.parse(localStorage.getItem("shoppingList")) || [];
+
+    function addItem() {
+      const input = document.getElementById("itemInput");
+      const category = document.getElementById("categorySelect").value;
+      const itemName = input.value.trim();
+
+      if (itemName === "") return;
+
+      list.push({ name: itemName, bought: false, category });
+      input.value = "";
+      saveAndRender();
+    }
+
+    function toggleItem(index) {
+      list[index].bought = !list[index].bought;
+      saveAndRender();
+    }
+
+    function removeItem(index) {
+      if (confirm("Remover este item?")) {
+        list.splice(index, 1);
+        saveAndRender();
+      }
+    }
+
+    function saveAndRender() {
+      localStorage.setItem("shoppingList", JSON.stringify(list));
+      renderList();
+    }
+
+    function renderList() {
+      const container = document.getElementById("listsContainer");
+      container.innerHTML = "";
+
+      const categories = ["Alimentação", "Higiene", "Limpeza", "Outros"];
+
+      categories.forEach(cat => {
+        const filtered = list
+          .filter(item => item.category === cat)
+          .sort((a, b) => a.name.localeCompare(b.name));
+
+        if (filtered.length > 0) {
+          const catDiv = document.createElement("div");
+          catDiv.innerHTML = `<h2>${cat}</h2><ul></ul>`;
+          const ul = catDiv.querySelector("ul");
+
+          filtered.forEach((item, index) => {
+            const i = list.indexOf(item);
+            const li = document.createElement("li");
+            li.className = item.bought ? "bought" : "";
+            li.onclick = () => toggleItem(i);
+            li.innerHTML = `
+              <span>${item.name}</span>
+              <button class="remove" onclick="event.stopPropagation(); removeItem(${i})">✖</button>
+            `;
+            ul.appendChild(li);
+          });
+
+          container.appendChild(catDiv);
+        }
+      });
+    }
+
+    renderList();
+  </script>
+</body>
+</html>
